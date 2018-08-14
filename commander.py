@@ -19,7 +19,7 @@ channel.exchange_declare(exchange='confirmation', durable=True)
 channel.queue_declare(queue='confirmation', durable=True)
 channel.queue_bind(exchange='confirmation', queue='confirmation')
 
-command = raw_input("Command? \n1) Take Picture/Send to Shock \n2) Quit \n3) Calibrate \n> ")
+command = raw_input("Command? \n1) Take Picture/Send to Shock \n2) Quit \n3) Calibrate \n4 Restart Calibration \n> ")
 
 n = 1
 
@@ -67,7 +67,7 @@ def callback(ch, method, properties, body):
 def calib_callback(ch, method, properties, body):
 	global calibrated
 	global confirmations
-	print body
+	print "%s: %s" % (properties.reply_to, body)
 	confirmations+=1
 	if body == "calibrated":
 		calibrated +=1
@@ -82,12 +82,15 @@ channel.confirm_delivery()
 
 
 for j in range(n):
+	first_run = True
 	count = 0
 	confirmations = 0
 	time = str(datetime.now())
 	calibrated = 0
+	total_cams = 0
 	while command == "3":
 		count = 0
+		delete = []
 		for cam in cams:
 			x =  channel.basic_publish(exchange='commands', routing_key=cams[cam], properties = pika.BasicProperties(correlation_id = time), body=str(command), mandatory=True)
 
@@ -96,12 +99,18 @@ for j in range(n):
                         	print "Command %s sent to '%s'" % (command, cams[cam])
                 	else:
                         	print '%s not found' % cams[cam]
+				delete.append(cam)
 
 		        channel.basic_consume(calib_callback, queue = 'confirmation', no_ack=True)
+		for cam in delete:
+			del cams[cam]
+		if first_run:
+			total_cams = count
+			first_run = False
 		channel.start_consuming()
 		confirmations = 0 
-		raw_input("press enter when ready")
-		if calibrated == count:
+		x = raw_input("Enter q to quit, anything else to continue. \n>")
+		if calibrated == total_cams or x == "q":
 			break
 
 	if command != "3":

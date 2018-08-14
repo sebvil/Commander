@@ -1,7 +1,14 @@
 import pika
 import sys
 from datetime import datetime
+import subprocess
 
+try:
+	subprocess.check_output("curl -X GET localhost:7445", shell =True)
+	print
+except subprocess.CalledProcessError:
+	print "Shock server not running"
+	quit()
 credentials = pika.PlainCredentials('guest', 'guest')
 parameters = pika.ConnectionParameters('localhost', 5672, "/", credentials)
 connection = pika.BlockingConnection(parameters)

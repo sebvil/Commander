@@ -109,11 +109,14 @@ for j in range(n):
 				delete.append(cam)
 
 		        channel.basic_consume(calib_callback, queue = 'confirmation', no_ack=True)
+
 		for cam in delete:
 			del cams[cam]
 		if first_run:
 			total_cams = count
 			first_run = False
+			if count == 0:
+				break
 		channel.start_consuming()
 		confirmations = 0 
 		x = raw_input("Enter q to quit, anything else to continue. \n>")

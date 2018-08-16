@@ -2,6 +2,7 @@ import pika
 import sys
 from datetime import datetime
 import subprocess
+from list_queues import list_queues
 
 try:
 	subprocess.check_output("curl -X GET localhost:7445", shell =True)
@@ -26,7 +27,7 @@ channel.exchange_declare(exchange='confirmation', durable=True)
 channel.queue_declare(queue='confirmation', durable=True)
 channel.queue_bind(exchange='confirmation', queue='confirmation')
 
-command = raw_input("Command? \n1) Take Picture/Send to Shock \n2) Quit \n3) Calibrate \n4 Restart Calibration \n> ")
+command = raw_input("Command? \n1) Take Picture/Send to Shock \n2) Quit \n3) Calibrate \n4) Restart Calibration \n> ")
 
 n = 1
 
@@ -42,24 +43,27 @@ cameras = []
 
 
 while not answer:
+	print "Avaliable queues:"
+	queues = list_queues()
+	cams = ""
+	for q in sorted(queues):
+		print "%s: %s" % (q, queues[q])
+		cams += q+" "
 	response = raw_input("Press 'a' to send command to all cameras, or enter camera number separated by one space \n> ")
 	if response == 'a':
 		answer = True
-		cameras = "1 2 3 4 5 6 7".split()
+		cameras = cams.split()
 	else:
 		cameras =  response.split()
 		for i in cameras:
 			answer = True
 			try:
-				if int(i) not in range(1,7):
-					answer = False
-					print "Wrong Input: %s. Camera number must be 1,2,3,4,5, or 6. Camera nubmers must be separated by a space" % i
-					break
-			except ValueError:
+				queues[i]
+			except KeyError:
 				answer = False
-				print"Wrong Input: %s. Camera number must be 1,2,3,4,5, or 6. Camera nubmers must be separated by a space" % i
+				print "Wrong Input: %s. Camera not found" % i
 				break
-		if not answer:
+		if response == "":
 			print "Please enter something"
 
 

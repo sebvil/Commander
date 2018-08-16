@@ -27,40 +27,16 @@ def download(indexes, directory, jdata):
 	for index in indexes:
 		ans = raw_input("File name? (press enter for default)\n> ")
 		id = jdata["data"][index]["id"]
+		try:
+			filename = jdata["data"][index]["file"]["name"]
+			if ans != "":
+				filename = ans
+			com = "curl -X GET localhost:7445/node/%s?download --output %s/%s" % (id, directory, filename)
+			subprocess.call(com, shell=True)
+		except ValueError:
+			print "No file to download"
+			continue
 
-		if ans == "":
-			try:
-				file = jdata["data"][index]["file"]["name"]
-				ind = file.index(".")
-				extension = file[ind:]
-
-				try:
-					host = jdata["data"][index]["attributes"]["RPi Hostname"]
-				except KeyError:
-					host = "host"
-				try:
-					frame_id = jdata["data"][index]["attributes"]["Frame ID"]
-					punct = string.punctuation
-					dash = "-" * len(punct)
-					transtab = string.maketrans(punct, dash)
-					frame_id = str(frame_id).translate(transtab).replace(" ", "-")
-				except KeyError:
-					frame_id = str(id[0:8])
-				if extension == ".jpg":
-					filename = "%s-%s%s" % (host, frame_id, extension)
-				elif extension  == ".yaml":
-					filename = "%s-parameters%s" %(host, extension)
-				else:
-					filename = str(id[0:8])+ extension
-			except ValueError:
-				print "No file to download"
-				continue
-
-		else:
-			filename = ans
-
-		com = "curl -X GET localhost:7445/node/%s?download --output %s/%s" % (id, directory, filename)
-		subprocess.call(com, shell=True)
 
 def get_attribute(indexes, attribute, jdata):
 	values = []

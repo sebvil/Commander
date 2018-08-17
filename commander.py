@@ -67,6 +67,9 @@ while not answer:
 			print "Please enter something"
 
 
+
+
+
 def callback(ch, method, properties, body):
 	global confirmations
 	print "Confirmation received from %s: %s" % (properties.reply_to,  body)
@@ -82,7 +85,7 @@ def calib_callback(ch, method, properties, body):
 	confirmations+=1
 	if body == "calibrated":
 		calibrated +=1
-		del cams[properties.reply_to[-1]]
+		
 	if confirmations == count:
 		channel.stop_consuming()
 cams ={}
@@ -90,7 +93,6 @@ for i in cameras:
 	cams[i] = "camera-%s" % i
 
 channel.confirm_delivery()
-
 
 for j in range(n):
 	first_run = True
@@ -100,8 +102,9 @@ for j in range(n):
 	calibrated = 0
 	total_cams = 0
 	while command == "3":
+		time = str(datetime.now())
 		count = 0
-		delete = []
+	
 		for cam in cams:
 			x =  channel.basic_publish(exchange='commands', routing_key=cams[cam], properties = pika.BasicProperties(correlation_id = time), body=str(command), mandatory=True)
 
@@ -114,8 +117,6 @@ for j in range(n):
 
 		        channel.basic_consume(calib_callback, queue = 'confirmation', no_ack=True)
 
-		for cam in delete:
-			del cams[cam]
 		if first_run:
 			total_cams = count
 			first_run = False
@@ -123,13 +124,14 @@ for j in range(n):
 				break
 		channel.start_consuming()
 		confirmations = 0 
-		x = raw_input("Enter q to quit, anything else to continue. \n>")
+		x = raw_input("Enter q to quit, anything else to continue. (Note: if nothing is done after a minute, pipe will breaj) \n>")
 		if calibrated == total_cams or x == "q":
 			break
-
+	if command == "4":
+		calib_id = str(datetime.now())
 	if command != "3":
 		for i in cameras:
-			x =  channel.basic_publish(exchange='commands', routing_key='camera-%s' %i, properties = pika.BasicProperties(correlation_id = time), body=str(command), mandatory=True)
+			x =  channel.basic_publish(exchange='commands', routing_key= cams[i], properties = pika.BasicProperties(correlation_id = time), body=str(command), mandatory=True)
 
 			if x == True:
 				count += 1

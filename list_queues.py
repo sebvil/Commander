@@ -1,7 +1,7 @@
 import subprocess
 
 def list_queues():
-	command = "sudo rabbitmqctl list_queues -p '/'"
+	command = "rabbitmqctl list_queues -p '/'"
 
 	ans = subprocess.check_output(command, shell=True)
 
